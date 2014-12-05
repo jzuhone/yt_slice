@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
     from astropy.io import fits
 
-    data = fits.open('paws_correct.fits', memmap=False)[0].data
+    data = fits.open('../paws_correct.fits', memmap=False)[0].data
     data = np.squeeze(data)
     x = data
     shp = data.shape
