@@ -45,27 +45,27 @@ def _sanitize_view(view, dims):
     return view
 
 
-class YtSlice(object):
+class ytSlice(object):
 
     """
-    Numpy slice interface to Yt Fixed Resolution Buffers.
+    Numpy slice interface to yt FixedResolutionBuffers.
 
     YtSlice objects can be indexed using multidimensional slices::
 
         obj[1::3, 2::4]
 
-    And the appropriate array will be extracted using Yt's Fixed
-    Resolution Buffer.
+    And the appropriate array will be extracted using yt's 
+    FixedResolutionBuffer.
     """
 
     def __init__(self, ds, field):
         """
         Parameters:
         -----------
-        ds : Yt Data Object
-           The t data to slice into
+        ds : yt Dataset
+           The yt dataset to slice into
         field : str
-           The name of the Yt field to extract
+           The name of the yt field to extract
         """
         self.ds = ds
         self.field = field

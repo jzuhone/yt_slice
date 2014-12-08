@@ -1,24 +1,24 @@
-from yt_slice import YtSlice
+from yt_slice import ytSlice
 
 from glue.core import Component
 
 
-class YtComponent(Component):
+class ytComponent(Component):
 
     def __init__(self, data, pf, field):
-        super(YtComponent, self).__init__(data)
-        self._y = YtSlice(pf, field)
+        super(ytComponent, self).__init__(data)
+        self._y = ytSlice(pf, field)
         self._last = None
 
     def __getitem__(self, view):
         if len([v for v in view if isinstance(v, int)]) != 1:
             print "-3D"
-            return super(YtComponent, self).__getitem__(view)
+            return super(ytComponent, self).__getitem__(view)
 
         for v in view:
             if not isinstance(v, (slice, int)):
                 print "fancy"
-                return super(YtComponent, self).__getitem__(view)
+                return super(ytComponent, self).__getitem__(view)
 
         if self._last == view:
             print "cache"
@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
     ds = load_uniform_grid(dict(data=data), shp, 1)
     d = Data(label='data')
-    d.add_component(YtComponent(x, ds, 'data'), label='x')
+    d.add_component(ytComponent(x, ds, 'data'), label='x')
 
     dc = DataCollection(d)
 
