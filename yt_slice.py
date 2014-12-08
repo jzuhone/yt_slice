@@ -1,8 +1,9 @@
 from yt.frontends.stream.api import load_uniform_grid
-from yt.mods import FixedResolutionBuffer
+from yt.visualization.fixed_resolution import FixedResolutionBuffer
 import numpy as np
 import pytest
 
+axis_lut = ((1,2),(0,2),(0,1))
 
 def _steps(slice):
     return int(np.ceil(1. * (slice.stop - slice.start) / slice.step))
@@ -57,40 +58,34 @@ class YtSlice(object):
     Resolution Buffer.
     """
 
-    def __init__(self, pf, field):
+    def __init__(self, ds, field):
         """
         Parameters:
         -----------
-        pf : Yt Data Object
-           The Yt data to slice into
+        ds : Yt Data Object
+           The t data to slice into
         field : str
            The name of the Yt field to extract
         """
-        self.pf = pf
+        self.ds = ds
         self.field = field
 
     def _slice_args(self, view):
         index, coord = [(i, v) for i, v in enumerate(view)
                         if not isinstance(v, slice)][0]
-        coord = 1. * coord / (self.pf.domain_dimensions[index] - 1)
+        coord = 1. * coord / (self.ds.domain_dimensions[index] - 1)
         if coord == 1:
             coord = 1 - 1e-6
         return index, coord
 
-    def _frb_args(self, view):
-        sx = sy = None
-        dim = self.pf.domain_dimensions
+    def _frb_args(self, view, axis):
+        dim = self.ds.domain_dimensions
 
-        for i, v in enumerate(view):
-            if not isinstance(v, slice):
-                continue
-
-            if sx is None:
-                sx = view[i]
-                nx = dim[i]
-            else:
-                sy = view[i]
-                ny = dim[i]
+        ix, iy = axis_lut[axis]
+        sx = view[ix]
+        nx = dim[ix]
+        sy = view[iy]
+        ny = dim[iy]
 
         l, r = sx.start, sx.stop
         b, t = sy.start, sy.stop
@@ -111,8 +106,9 @@ class YtSlice(object):
         -------
         A numpy array
         """
-        sl = self.pf.h.slice(*self._slice_args(view))
-        frb = FixedResolutionBuffer(sl, *self._frb_args(view))
+        axis, coord = self._slice_args(view)
+        sl = self.ds.slice(axis, coord)
+        frb = FixedResolutionBuffer(sl, *self._frb_args(view, axis))
         return np.array(frb[self.field]).T
 
     def _extract_cube(self, view):
@@ -130,7 +126,7 @@ class YtSlice(object):
         return result
 
     def __getitem__(self, view):
-        view = _sanitize_view(view, self.pf.domain_dimensions)
+        view = _sanitize_view(view, self.ds.domain_dimensions)
         assert len(view) == 3
 
         i = len([v for v in view if isinstance(v, slice)])

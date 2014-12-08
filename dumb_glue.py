@@ -34,20 +34,20 @@ class YtComponent(Component):
 if __name__ == "__main__":
 
     from glue.core import Data, DataCollection
-    from glue.qt import GlueApplication
+    from glue.qt.glue_application import GlueApplication
     from yt.frontends.stream.api import load_uniform_grid
     import numpy as np
 
     from astropy.io import fits
 
-    data = fits.open('../paws_correct.fits', memmap=False)[0].data
+    data = fits.open('/Users/jzuhone/Data/yt_test_outputs/grs-50-cube.fits', memmap=False)[0].data
     data = np.squeeze(data)
     x = data
     shp = data.shape
 
-    pf = load_uniform_grid(dict(data=data), shp, 1)
+    ds = load_uniform_grid(dict(data=data), shp, 1)
     d = Data(label='data')
-    d.add_component(YtComponent(x, pf, 'data'), label='x')
+    d.add_component(YtComponent(x, ds, 'data'), label='x')
 
     dc = DataCollection(d)
 
