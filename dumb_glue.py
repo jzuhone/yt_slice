@@ -30,14 +30,14 @@ class ytComponent(Component):
         return result
 
 
-def export_gluc(ds)
+def export_glue(ds, data, name):
 
     from glue.core import Data, DataCollection
     from glue.qt.glue_application import GlueApplication
     import numpy as np
 
-    d = Data(label='data')
-    d.add_component(ytComponent(x, ds, 'data'), label='x')
+    d = Data(label=name)
+    d.add_component(ytComponent(data, ds, name), label='x')
 
     dc = DataCollection(d)
 
@@ -49,6 +49,8 @@ if __name__ == "__main__":
 
     data = fits.open('/Users/jzuhone/Data/yt_test_outputs/grs-50-cube.fits', memmap=False)[0].data
     data = np.squeeze(data)
+    x = data
     shp = data.shape
 
     ds = load_uniform_grid(dict(data=data), shp, 1)
+    export_glue(ds, x, 'data')
