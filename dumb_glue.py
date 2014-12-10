@@ -24,28 +24,18 @@ class ytComponent(Component):
             print "cache"
             return self._last_result
 
-        print 'YT, BITCHES!!!!'
         result = self._y[view]
         self._last = view
         self._last_result = result
         return result
 
 
-if __name__ == "__main__":
+def export_gluc(ds)
 
     from glue.core import Data, DataCollection
     from glue.qt.glue_application import GlueApplication
-    from yt.frontends.stream.api import load_uniform_grid
     import numpy as np
 
-    from astropy.io import fits
-
-    data = fits.open('/Users/jzuhone/Data/yt_test_outputs/grs-50-cube.fits', memmap=False)[0].data
-    data = np.squeeze(data)
-    x = data
-    shp = data.shape
-
-    ds = load_uniform_grid(dict(data=data), shp, 1)
     d = Data(label='data')
     d.add_component(ytComponent(x, ds, 'data'), label='x')
 
@@ -53,3 +43,12 @@ if __name__ == "__main__":
 
     ga = GlueApplication(dc)
     ga.start()
+
+if __name__ == "__main__":
+    from astropy.io import fits
+
+    data = fits.open('/Users/jzuhone/Data/yt_test_outputs/grs-50-cube.fits', memmap=False)[0].data
+    data = np.squeeze(data)
+    shp = data.shape
+
+    ds = load_uniform_grid(dict(data=data), shp, 1)
