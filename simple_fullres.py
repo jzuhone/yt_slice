@@ -16,8 +16,8 @@ class ytSliceComponent(Component):
 
     @property
     def shape(self):
-        return tuple(self.ds.refine_by**min(self.ds.max_level, 5)
-                   * self.ds.domain_dimensions)
+        shp = self.ds.refine_by**self.ds.index.max_level*self.ds.domain_dimensions
+        return tuple(shp.astype("int"))
 
     def _frb_args(self, view, axis):
         dim = self.shape
@@ -34,35 +34,47 @@ class ytSliceComponent(Component):
         b, t = sy.start, sy.stop
         w = _steps(sx)
         h = _steps(sy)
-        bounds = (1. * l / nx + self._left_edge[ix],
-                  1. * r / nx + self._left_edge[ix],
-                  1. * b / ny + self._left_edge[iy],
-                  1. * t / ny + self._left_edge[iy])
+        bounds = (self._dds[ix] * l + self._left_edge[ix],
+                  self._dds[ix] * r + self._left_edge[ix],
+                  self._dds[iy] * b + self._left_edge[iy],
+                  self._dds[iy] * t + self._left_edge[iy])
         return bounds, (h, w)
-
+        
     _last_view = None
     _last_result = None
     def __getitem__(self, view):
         if self._last_view == view:
             return self._last_result
         self._last_view = view
-        i = len([v for v in view if isinstance(v, slice)])
-        if i == 3:
-            LE, RE = [], []
-            for i, v in enumerate(view):
-                c = v.start
-                if c is None: c = 0.0
-                LE.append(self._left_edge[i] + c * self._dds[i])
-                c = v.stop
-                if c is None: c = self.shape[i] - 1
-                RE.append(self._left_edge[i] + c * self._dds[i])
-            LE = np.array(LE)
-            RE = np.array(RE)
-            obj = self.ds.region((LE + RE)/2.0, LE, RE)
-            self._last_result = obj[self.field]
-        elif i == 2:
+        nd = len([v for v in view if isinstance(v, slice)])
+        if nd == 3:
+            vstart = np.zeros(3,dtype="int")
+            vstop = np.zeros(3,dtype="int")
+            vstep = np.zeros(3,dtype="int")
+            for i, (v, shp) in enumerate(zip(view, self.shape)):
+                ii = v.indices(shp)
+                vstart[i] = ii[0]
+                vstop[i] = ii[1]
+                vstep[i] = ii[2]
+            if np.prod(vstep) == 1:
+                level = self.ds.index.max_level
+            else:
+                print("minmax")
+                n = len(range(*view[0].indices(self.shape[0])))
+                self._last_result = np.random.uniform(low=self.ds.find_min(self.field)[0].v,
+                                                      high=self.ds.find_max(self.field)[0].v,
+                                                      size=(n,)*3)
+                return self._last_result
+            gle = self._left_edge + vstart*self._dds
+            gdims = (vstop-vstart)//vstep
+            if np.prod(gdims) == 1:
+                fdv = self.ds.find_field_values_at_point(self.field, gle+0.5*self._dds)
+                self._last_result = fdv.d.reshape(1,1,1)
+            else:
+                obj = self.ds.smoothed_covering_grid(level, gle, gdims)
+                self._last_result = obj[self.field].d
+        elif nd == 2:
             axis, coord = self._slice_args(view)
-            bounds, (h, w) = self._frb_args(view, axis)
             sl = self.ds.slice(axis, coord)
             frb = FixedResolutionBuffer(sl, *self._frb_args(view, axis))
             self._last_result = frb[self.field].d.T
@@ -73,6 +85,6 @@ class ytSliceComponent(Component):
     def _slice_args(self, view):
         index, coord = [(i, v) for i, v in enumerate(view)
                         if not isinstance(v, slice)][0]
-        coord = coord * self._dds[index]
+        coord = coord * self._dds[index]+self._left_edge[index]
         return index, coord
 
