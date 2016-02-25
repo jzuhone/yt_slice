@@ -4,7 +4,7 @@ from glue.qt.glue_application import GlueApplication
 import numpy as np
 import yt
 from simple_fullres import ytSliceComponent
-ds = yt.load("GasSloshingLowRes/sloshing_low_res_hdf5_plt_cnt_0600")
+ds = yt.load("GasSloshing/sloshing_nomag2_hdf5_plt_cnt_0150")
 d = Data(label=str(ds))
 for field in ("density", "temperature", "velocity_x",
               "velocity_y", "velocity_z"):
